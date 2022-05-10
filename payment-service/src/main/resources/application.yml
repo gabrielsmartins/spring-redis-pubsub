@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: payment-service
+  sleuth:
+    opentracing:
+      enabled: true
+    trace-id128: true
+  redis:
+    client-type: JEDIS
+    host: localhost
+    port: 6379
+    client-name: ${spring.application.name}
+    password: 'redis'
+    ssl: false
+    jedis:
+      pool:
+        enabled: true
+
+topic:
+  order-topic: order-topic
+  payment-topic: payment-topic
