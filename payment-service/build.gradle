@@ -1,3 +1,5 @@
+import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
+
 plugins {
 	id 'org.springframework.boot' version '2.6.7'
 	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
@@ -23,6 +25,8 @@ ext {
 	set('jedisVersion', "3.8.0")
 	set('logstashVersion', "7.1.1")
 	set('modelMapperVersion', "3.1.0")
+	set('awsSdkVersion', "1.12.459")
+	set('testContainersVersion', "1.18.0")
 }
 
 dependencies {
@@ -36,6 +40,7 @@ dependencies {
 	implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
 	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
 	implementation 'org.springframework.cloud:spring-cloud-starter-sleuth'
+	implementation 'com.amazonaws:aws-java-sdk-dynamodb'
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
@@ -44,14 +49,26 @@ dependencies {
 	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+	testImplementation platform("org.testcontainers:testcontainers-bom:${testContainersVersion}") //import bom
+	testImplementation('org.testcontainers:testcontainers') //no version specified
 }
 
 dependencyManagement {
 	imports {
 		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+		mavenBom "com.amazonaws:aws-java-sdk-bom:${awsSdkVersion}"
 	}
 }
 
-tasks.named('test') {
+test {
+	OperatingSystem os = DefaultNativePlatform.currentOperatingSystem;
+	if (os.isLinux()) {
+		def uid = ["id", "-u"].execute().text.trim()
+		environment "DOCKER_HOST", "unix:///run/user/$uid/podman/podman.sock"
+	} else if (os.isMacOsX()) {
+		environment "DOCKER_HOST", "unix:///tmp/podman.sock"
+	}
+	environment "TESTCONTAINERS_RYUK_DISABLED", "true"
 	useJUnitPlatform()
 }

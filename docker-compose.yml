@@ -1,13 +1,35 @@
 version: '3.8'
 services:
   redis:
-    image: redis
+    image: docker.io/redis
     container_name: redis
     command: redis-server --requirepass redis
     ports:
       - 6379:6379
   redisinsight:
-    image: redislabs/redisinsight:latest
+    image: docker.io/redislabs/redisinsight:latest
     container_name: redisinsight
     ports:
       - 8001:8001
+  localstack:
+    container_name: "${LOCALSTACK_DOCKER_NAME-localstack_main}"
+    image: docker.io/localstack/localstack
+    network_mode: bridge
+    ports:
+      #- "127.0.0.1:53:53"                # only required for Pro (DNS)
+      #- "127.0.0.1:53:53/udp"            # only required for Pro (DNS)
+      #- "127.0.0.1:443:443"              # only required for Pro (LocalStack HTTPS Edge Proxy)
+      - "127.0.0.1:4510-4559:4510-4559"  # external service port range
+      - "127.0.0.1:4566:4566"            # LocalStack Edge Proxy
+    environment:
+      - DEBUG=${DEBUG-}
+      - DATA_DIR=${DATA_DIR-}
+      - LAMBDA_EXECUTOR=${LAMBDA_EXECUTOR-}
+      - LOCALSTACK_API_KEY=${LOCALSTACK_API_KEY-}  # only required for Pro
+      - HOST_TMP_FOLDER=${TMPDIR:-/tmp/}localstack
+      - DOCKER_HOST=unix://run/podman/podman.sock
+    volumes:
+      - "${TMPDIR:-/tmp}/localstack:/tmp/localstack"
+      #- "/var/run/docker.sock:/var/run/docker.sock"
+      - ./aws-scripts:/docker-entrypoint-initaws.d
+      

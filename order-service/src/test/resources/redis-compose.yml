@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+  redis:
+    image: docker.io/redis
+    command: redis-server --requirepass redis
+    ports:
+      - 6379:6379
+  redisinsight:
+    image: docker.io/redislabs/redisinsight:latest
+    ports:
+      - 8001:8001
+
